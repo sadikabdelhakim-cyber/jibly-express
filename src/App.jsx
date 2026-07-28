@@ -13,6 +13,56 @@ import ClientInvoiceModal from './components/ClientInvoiceModal';
 import { DEFAULT_DRIVERS, DEFAULT_ORDERS, DEFAULT_SETTINGS, getCurrentDeliveryFee } from './data/initialData';
 import { playNewOrderSound, playClaimSound, playSuccessSound } from './utils/audio';
 import { createSyncChannel } from './utils/sync';
+import { supabase, isSupabaseConfigured } from './utils/supabase';
+
+// Helper mapping DB row <-> JS order object
+function mapRowToOrder(row) {
+  return {
+    id: row.id,
+    createdAt: row.created_at || row.createdAt,
+    customerName: row.customer_name || row.customerName,
+    customerPhone: row.customer_phone || row.customerPhone,
+    address: row.address,
+    itemList: row.item_list || row.itemList || [],
+    items: row.items,
+    sellingPrice: Number(row.selling_price ?? row.sellingPrice ?? 0),
+    estimatedCapital: Number(row.estimated_capital ?? row.estimatedCapital ?? 0),
+    deliveryFee: Number(row.delivery_fee ?? row.deliveryFee ?? 0),
+    status: row.status,
+    claimedBy: row.claimed_by || row.claimedBy || null,
+    claimedAt: row.claimed_at || row.claimedAt || null,
+    deliveredAt: row.delivered_at || row.deliveredAt || null,
+    actualCapital: row.actual_capital ?? row.actualCapital ?? null,
+    actualDeliveryFee: row.actual_delivery_fee ?? row.actualDeliveryFee ?? null,
+    totalCollected: row.total_collected ?? row.totalCollected ?? null,
+    driverNotes: row.driver_notes || row.driverNotes || '',
+    paymentMethod: row.payment_method || row.paymentMethod || 'cash'
+  };
+}
+
+function mapOrderToRow(ord) {
+  return {
+    id: ord.id,
+    created_at: ord.createdAt,
+    customer_name: ord.customerName,
+    customer_phone: ord.customerPhone,
+    address: ord.address,
+    item_list: ord.itemList || [],
+    items: ord.items,
+    selling_price: ord.sellingPrice,
+    estimated_capital: ord.estimatedCapital,
+    delivery_fee: ord.deliveryFee,
+    status: ord.status,
+    claimed_by: ord.claimedBy,
+    claimed_at: ord.claimedAt,
+    delivered_at: ord.deliveredAt,
+    actual_capital: ord.actualCapital,
+    actual_delivery_fee: ord.actualDeliveryFee,
+    total_collected: ord.totalCollected,
+    driver_notes: ord.driverNotes,
+    payment_method: ord.paymentMethod || 'cash'
+  };
+}
 
 export default function App() {
   // Theme state
@@ -83,42 +133,80 @@ export default function App() {
     }
   }, [currentUser]);
 
-  // 5. Persist Orders to LocalStorage & broadcast to other open tabs
-  const updateOrdersAndSync = (newOrders, actionType = 'update') => {
+  // 5. Initialize Supabase Realtime Sync or Fallback to Multi-Tab Sync
+  useEffect(() => {
+    if (isSupabaseConfigured && supabase) {
+      // Fetch existing orders from Supabase DB
+      const fetchOrders = async () => {
+        try {
+          const { data, error } = await supabase.from('orders').select('*').order('created_at', { ascending: false });
+          if (!error && Array.isArray(data)) {
+            const mapped = data.map(mapRowToOrder);
+            setOrders(mapped);
+            localStorage.setItem('delivery_app_orders', JSON.stringify(mapped));
+          }
+        } catch (e) {
+          console.error('Error fetching Supabase orders:', e);
+        }
+      };
+
+      fetchOrders();
+
+      // Subscribe to Realtime Postgres changes
+      const channel = supabase
+        .channel('realtime:orders')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, (payload) => {
+          fetchOrders();
+          if (soundEnabled) {
+            if (payload.eventType === 'INSERT') playNewOrderSound();
+            else if (payload.eventType === 'UPDATE') playClaimSound();
+          }
+        })
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    } else {
+      // LocalStorage Multi-Tab fallback listener
+      syncChannelRef.current = createSyncChannel((msg) => {
+        if (msg && msg.orders) {
+          setOrders(msg.orders);
+          localStorage.setItem('delivery_app_orders', JSON.stringify(msg.orders));
+
+          if (soundEnabled) {
+            if (msg.type === 'new_order') playNewOrderSound();
+            else if (msg.type === 'claim_order') playClaimSound();
+            else if (msg.type === 'delivered_order') playSuccessSound();
+          }
+        }
+      });
+
+      return () => {
+        if (syncChannelRef.current) syncChannelRef.current.close();
+      };
+    }
+  }, [soundEnabled]);
+
+  // Helper to persist order changes locally and on Supabase
+  const updateOrdersAndSync = async (newOrders, actionType = 'update', targetOrder = null) => {
     setOrders(newOrders);
     localStorage.setItem('delivery_app_orders', JSON.stringify(newOrders));
 
-    if (syncChannelRef.current) {
+    if (isSupabaseConfigured && supabase && targetOrder) {
+      try {
+        const row = mapOrderToRow(targetOrder);
+        await supabase.from('orders').upsert(row);
+      } catch (err) {
+        console.error('Supabase update failed:', err);
+      }
+    } else if (syncChannelRef.current) {
       syncChannelRef.current.postMessage({
         type: actionType,
         orders: newOrders
       });
     }
   };
-
-  // 6. Initialize Multi-Tab Sync listener
-  useEffect(() => {
-    syncChannelRef.current = createSyncChannel((msg) => {
-      if (msg && msg.orders) {
-        setOrders(msg.orders);
-        localStorage.setItem('delivery_app_orders', JSON.stringify(msg.orders));
-
-        if (soundEnabled) {
-          if (msg.type === 'new_order') {
-            playNewOrderSound();
-          } else if (msg.type === 'claim_order') {
-            playClaimSound();
-          } else if (msg.type === 'delivered_order') {
-            playSuccessSound();
-          }
-        }
-      }
-    });
-
-    return () => {
-      if (syncChannelRef.current) syncChannelRef.current.close();
-    };
-  }, [soundEnabled]);
 
   // Handler: Add New Driver to Team
   const handleAddDriver = (newDriverData) => {
@@ -163,7 +251,7 @@ export default function App() {
     };
 
     const updated = [newOrder, ...orders];
-    updateOrdersAndSync(updated, 'new_order');
+    updateOrdersAndSync(updated, 'new_order', newOrder);
 
     if (soundEnabled) playNewOrderSound();
   };
@@ -193,27 +281,30 @@ export default function App() {
       return;
     }
 
+    let updatedTarget = null;
     const updated = orders.map(o => {
       if (o.id === orderId) {
-        return {
+        updatedTarget = {
           ...o,
           status: 'claimed',
           claimedBy: { id: currentDriver.id, name: currentDriver.name },
           claimedAt: new Date().toISOString()
         };
+        return updatedTarget;
       }
       return o;
     });
 
-    updateOrdersAndSync(updated, 'claim_order');
+    updateOrdersAndSync(updated, 'claim_order', updatedTarget);
     if (soundEnabled) playClaimSound();
   };
 
   // Handler: Confirm Order Delivered (Strictly Cash)
   const handleConfirmDelivered = (orderId, deliveryDetails) => {
+    let updatedTarget = null;
     const updated = orders.map(o => {
       if (o.id === orderId) {
-        return {
+        updatedTarget = {
           ...o,
           status: 'delivered',
           deliveredAt: new Date().toISOString(),
@@ -223,24 +314,27 @@ export default function App() {
           paymentMethod: 'cash',
           driverNotes: deliveryDetails.driverNotes
         };
+        return updatedTarget;
       }
       return o;
     });
 
-    updateOrdersAndSync(updated, 'delivered_order');
+    updateOrdersAndSync(updated, 'delivered_order', updatedTarget);
     if (soundEnabled) playSuccessSound();
   };
 
   // Handler: Cancel Order (Admin)
   const handleCancelOrder = (orderId) => {
     if (window.confirm('واش متأكد بغيتي تلغي هاد الطلبية؟')) {
+      let updatedTarget = null;
       const updated = orders.map(o => {
         if (o.id === orderId) {
-          return { ...o, status: 'cancelled' };
+          updatedTarget = { ...o, status: 'cancelled' };
+          return updatedTarget;
         }
         return o;
       });
-      updateOrdersAndSync(updated, 'cancel_order');
+      updateOrdersAndSync(updated, 'cancel_order', updatedTarget);
     }
   };
 
