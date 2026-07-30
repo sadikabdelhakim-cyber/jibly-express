@@ -1,20 +1,212 @@
-// Initial Demo Data for Drivers and Orders in Moroccan Context
+// ============================================================
+// Jibly Express — Multi-Tenant Initial Data & Models
+// ============================================================
 
-export const DEFAULT_DRIVERS = [
-  { id: 'drv-1', name: 'أمين العوادي', phone: '0661122334', vehicle: 'موتور C90', status: 'نشيط', dailyCapitalLimit: 1500, avatar: '🏍️' },
-  { id: 'drv-2', name: 'حمزة بنسودة', phone: '0662233445', vehicle: 'موتور SH', status: 'نشيط', dailyCapitalLimit: 1000, avatar: '🛵' },
-  { id: 'drv-3', name: 'ياسين المرابط', phone: '0663344556', vehicle: 'طوموبيل Picanto', status: 'نشيط', dailyCapitalLimit: 2000, avatar: '🚗' },
-  { id: 'drv-4', name: 'عمر التازي', phone: '0664455667', vehicle: 'موتور Docker', status: 'نشيط', dailyCapitalLimit: 1000, avatar: '📦' }
+// Super Admin Credentials (صاحب المنصة)
+export const SUPER_ADMIN_CREDENTIALS = {
+  pin: 'superadmin',
+  name: 'الأدمن العام'
+};
+
+// ============================================================
+// Default Teams (الفرق التجريبية)
+// ============================================================
+export const DEFAULT_TEAMS = [
+  {
+    id: 'team-1',
+    name: 'فريق البرق للتوصيل',
+    brandName: 'البرق Express',
+    logo: '⚡',
+    city: 'الدار البيضاء',
+    phone: '0522334455',
+    email: 'albarq@example.com',
+    address: 'شارع محمد الخامس، المعاريف',
+    status: 'active',
+    createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+    adminPin: '1111',
+    settings: {
+      dayDeliveryFee: 25,
+      nightDeliveryFee: 35,
+      nightStartHour: 20,
+      nightEndHour: 6
+    }
+  },
+  {
+    id: 'team-2',
+    name: 'فريق الصاعقة',
+    brandName: 'الصاعقة Delivery',
+    logo: '🚀',
+    city: 'الرباط',
+    phone: '0537112233',
+    email: 'sa3iqa@example.com',
+    address: 'حي أكدال، شارع فرنسا',
+    status: 'active',
+    createdAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(),
+    adminPin: '2222',
+    settings: {
+      dayDeliveryFee: 20,
+      nightDeliveryFee: 30,
+      nightStartHour: 21,
+      nightEndHour: 6
+    }
+  },
+  {
+    id: 'team-3',
+    name: 'فريق النسر السريع',
+    brandName: 'النسر Express',
+    logo: '🦅',
+    city: 'مراكش',
+    phone: '0524998877',
+    email: 'nasr@example.com',
+    address: 'جليز، شارع الحرية',
+    status: 'suspended',
+    createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+    adminPin: '3333',
+    settings: {
+      dayDeliveryFee: 15,
+      nightDeliveryFee: 25,
+      nightStartHour: 20,
+      nightEndHour: 6
+    }
+  }
 ];
 
+// ============================================================
+// Default Drivers (الليفرورات — مربوطين بالفرق)
+// ============================================================
+export const DEFAULT_DRIVERS = [
+  // --- Team 1: فريق البرق ---
+  {
+    id: 'drv-1',
+    teamId: 'team-1',
+    name: 'أمين العوادي',
+    phone: '0661122334',
+    vehicle: 'موتور C90',
+    vehiclePlate: 'A-12345',
+    nationalId: '',
+    status: 'نشيط',
+    dailyCapitalLimit: 1500,
+    avatar: '🏍️',
+    joinedAt: new Date(Date.now() - 28 * 24 * 60 * 60 * 1000).toISOString(),
+    notes: ''
+  },
+  {
+    id: 'drv-2',
+    teamId: 'team-1',
+    name: 'حمزة بنسودة',
+    phone: '0662233445',
+    vehicle: 'موتور SH',
+    vehiclePlate: 'B-67890',
+    nationalId: '',
+    status: 'نشيط',
+    dailyCapitalLimit: 1000,
+    avatar: '🛵',
+    joinedAt: new Date(Date.now() - 25 * 24 * 60 * 60 * 1000).toISOString(),
+    notes: ''
+  },
+  {
+    id: 'drv-3',
+    teamId: 'team-1',
+    name: 'ياسين المرابط',
+    phone: '0663344556',
+    vehicle: 'طوموبيل Picanto',
+    vehiclePlate: '12345-A-1',
+    nationalId: 'AB123456',
+    status: 'نشيط',
+    dailyCapitalLimit: 2000,
+    avatar: '🚗',
+    joinedAt: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000).toISOString(),
+    notes: 'مسؤول على التوصيلات البعيدة'
+  },
+  {
+    id: 'drv-4',
+    teamId: 'team-1',
+    name: 'عمر التازي',
+    phone: '0664455667',
+    vehicle: 'موتور Docker',
+    vehiclePlate: '',
+    nationalId: '',
+    status: 'موقوف',
+    dailyCapitalLimit: 1000,
+    avatar: '📦',
+    joinedAt: new Date(Date.now() - 18 * 24 * 60 * 60 * 1000).toISOString(),
+    notes: 'موقوف مؤقتاً - مشكل في التسليم'
+  },
+
+  // --- Team 2: فريق الصاعقة ---
+  {
+    id: 'drv-5',
+    teamId: 'team-2',
+    name: 'سعيد بناني',
+    phone: '0665566778',
+    vehicle: 'موتور C90',
+    vehiclePlate: 'C-11111',
+    nationalId: '',
+    status: 'نشيط',
+    dailyCapitalLimit: 1200,
+    avatar: '🏍️',
+    joinedAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(),
+    notes: ''
+  },
+  {
+    id: 'drv-6',
+    teamId: 'team-2',
+    name: 'كريم الفاسي',
+    phone: '0666677889',
+    vehicle: 'طوموبيل Clio',
+    vehiclePlate: '54321-B-2',
+    nationalId: 'CD789012',
+    status: 'نشيط',
+    dailyCapitalLimit: 1800,
+    avatar: '🚗',
+    joinedAt: new Date(Date.now() - 12 * 24 * 60 * 60 * 1000).toISOString(),
+    notes: ''
+  },
+  {
+    id: 'drv-7',
+    teamId: 'team-2',
+    name: 'يونس الحسني',
+    phone: '0667788990',
+    vehicle: 'Vélo كهربائي',
+    vehiclePlate: '',
+    nationalId: '',
+    status: 'نشيط',
+    dailyCapitalLimit: 800,
+    avatar: '🚲',
+    joinedAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
+    notes: 'متخصص في توصيلات وسط المدينة'
+  },
+
+  // --- Team 3: فريق النسر (suspended) ---
+  {
+    id: 'drv-8',
+    teamId: 'team-3',
+    name: 'رشيد أمزيل',
+    phone: '0668899001',
+    vehicle: 'موتور SH',
+    vehiclePlate: 'D-99999',
+    nationalId: '',
+    status: 'نشيط',
+    dailyCapitalLimit: 1000,
+    avatar: '🛵',
+    joinedAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(),
+    notes: ''
+  }
+];
+
+// ============================================================
+// Default Settings (backwards compatibility)
+// ============================================================
 export const DEFAULT_SETTINGS = {
   dayDeliveryFee: 25,
   nightDeliveryFee: 35,
-  nightStartHour: 20, // 20:00 (8 PM)
-  nightEndHour: 6     // 06:00 (6 AM)
+  nightStartHour: 20,
+  nightEndHour: 6
 };
 
-// Helper to determine active fee based on Day vs Night current time
+// ============================================================
+// Helper: Determine Active Fee (Day vs Night)
+// ============================================================
 export function getCurrentDeliveryFee(settings = DEFAULT_SETTINGS) {
   const currentHour = new Date().getHours();
   const nightStart = settings.nightStartHour || 20;
@@ -24,9 +216,13 @@ export function getCurrentDeliveryFee(settings = DEFAULT_SETTINGS) {
   return isNight ? settings.nightDeliveryFee : settings.dayDeliveryFee;
 }
 
+// ============================================================
+// Default Orders (الطلبيات التجريبية — مربوطة بالفرق)
+// ============================================================
 export const DEFAULT_ORDERS = [
   {
     id: 'ORD-101',
+    teamId: 'team-1',
     createdAt: new Date(Date.now() - 15 * 60000).toISOString(),
     customerName: 'كمال المراني',
     customerPhone: '0665544332',
@@ -51,6 +247,7 @@ export const DEFAULT_ORDERS = [
   },
   {
     id: 'ORD-102',
+    teamId: 'team-1',
     createdAt: new Date(Date.now() - 45 * 60000).toISOString(),
     customerName: 'فاطمة الزهراء البقالي',
     customerPhone: '0677889900',
@@ -75,6 +272,7 @@ export const DEFAULT_ORDERS = [
   },
   {
     id: 'ORD-103',
+    teamId: 'team-1',
     createdAt: new Date(Date.now() - 120 * 60000).toISOString(),
     customerName: 'عثمان الإدريسي',
     customerPhone: '0661998877',
@@ -95,10 +293,144 @@ export const DEFAULT_ORDERS = [
     totalCollected: 685,
     driverNotes: 'تم التسليم وتسلمت المبلغ كاملاً كاش',
     paymentMethod: 'cash'
+  },
+  // --- Team 2 Orders ---
+  {
+    id: 'ORD-201',
+    teamId: 'team-2',
+    createdAt: new Date(Date.now() - 20 * 60000).toISOString(),
+    customerName: 'نادية العلوي',
+    customerPhone: '0671234567',
+    address: 'حي الرياض، الرباط، زنقة الأمل رقم 22',
+    itemList: [
+      { id: 'item-1', name: 'قفطان مغربي تقليدي', quantity: 1, price: 800 }
+    ],
+    items: 'قفطان مغربي تقليدي',
+    sellingPrice: 800,
+    estimatedCapital: 550,
+    deliveryFee: 20,
+    status: 'available',
+    claimedBy: null,
+    claimedAt: null,
+    deliveredAt: null,
+    actualCapital: null,
+    actualDeliveryFee: null,
+    totalCollected: null,
+    driverNotes: '',
+    paymentMethod: 'cash'
+  },
+  {
+    id: 'ORD-202',
+    teamId: 'team-2',
+    createdAt: new Date(Date.now() - 90 * 60000).toISOString(),
+    customerName: 'محمد أمين بنشقرون',
+    customerPhone: '0679876543',
+    address: 'حسان، الرباط، شارع الحسن الثاني',
+    itemList: [
+      { id: 'item-1', name: 'هاتف Samsung A54', quantity: 1, price: 3200 }
+    ],
+    items: 'هاتف Samsung A54',
+    sellingPrice: 3200,
+    estimatedCapital: 2800,
+    deliveryFee: 20,
+    status: 'delivered',
+    claimedBy: { id: 'drv-6', name: 'كريم الفاسي' },
+    claimedAt: new Date(Date.now() - 80 * 60000).toISOString(),
+    deliveredAt: new Date(Date.now() - 50 * 60000).toISOString(),
+    actualCapital: 2800,
+    actualDeliveryFee: 20,
+    totalCollected: 3220,
+    driverNotes: 'الزبون تسلم المنتج بدون مشاكل',
+    paymentMethod: 'cash'
   }
 ];
 
-// Helper to parse WhatsApp raw text into structured order object
+// ============================================================
+// Helper: Parse WhatsApp Raw Text → Structured Order
+// ============================================================
+// ============================================================
+// Multi-Tenant Helper Functions
+// ============================================================
+
+/** Get drivers belonging to a specific team */
+export function getTeamDrivers(teamId, drivers = []) {
+  return drivers.filter(d => d.teamId === teamId);
+}
+
+/** Get orders belonging to a specific team */
+export function getTeamOrders(teamId, orders = []) {
+  return orders.filter(o => o.teamId === teamId);
+}
+
+/** Generate a unique Team ID */
+export function generateTeamId() {
+  return 'team-' + Date.now() + '-' + Math.random().toString(36).substring(2, 7);
+}
+
+/** Generate a unique Driver ID */
+export function generateDriverId() {
+  return 'drv-' + Date.now() + '-' + Math.random().toString(36).substring(2, 7);
+}
+
+/** Create a new team object with defaults */
+export function createTeamObject(data) {
+  return {
+    id: generateTeamId(),
+    name: data.name || '',
+    brandName: data.brandName || '',
+    logo: data.logo || '🚚',
+    city: data.city || '',
+    phone: data.phone || '',
+    email: data.email || '',
+    address: data.address || '',
+    status: 'active',
+    createdAt: new Date().toISOString(),
+    adminPin: data.adminPin || '0000',
+    settings: {
+      dayDeliveryFee: data.dayDeliveryFee || 25,
+      nightDeliveryFee: data.nightDeliveryFee || 35,
+      nightStartHour: data.nightStartHour || 20,
+      nightEndHour: data.nightEndHour || 6
+    }
+  };
+}
+
+/** Get all platform stats (for Super Admin) */
+export function getPlatformStats(teams = [], drivers = [], orders = []) {
+  const activeTeams = teams.filter(t => t.status === 'active');
+  const activeDrivers = drivers.filter(d => d.status === 'نشيط');
+  const suspendedDrivers = drivers.filter(d => d.status === 'موقوف');
+  const deliveredOrders = orders.filter(o => o.status === 'delivered');
+
+  const teamPerformance = teams.map(team => {
+    const teamDrivers = getTeamDrivers(team.id, drivers);
+    const teamOrders = getTeamOrders(team.id, orders);
+    const teamDelivered = teamOrders.filter(o => o.status === 'delivered');
+    return {
+      ...team,
+      driverCount: teamDrivers.length,
+      activeDriverCount: teamDrivers.filter(d => d.status === 'نشيط').length,
+      orderCount: teamOrders.length,
+      deliveredCount: teamDelivered.length,
+      totalRevenue: teamDelivered.reduce((sum, o) => sum + (o.totalCollected || 0), 0)
+    };
+  }).sort((a, b) => b.deliveredCount - a.deliveredCount);
+
+  return {
+    totalTeams: teams.length,
+    activeTeams: activeTeams.length,
+    totalDrivers: drivers.length,
+    activeDrivers: activeDrivers.length,
+    suspendedDrivers: suspendedDrivers.length,
+    totalOrders: orders.length,
+    deliveredOrders: deliveredOrders.length,
+    teamPerformance
+  };
+}
+
+// ============================================================
+// Helper: Parse WhatsApp Raw Text → Structured Order
+// ============================================================
 export function parseWhatsAppMessage(rawText, currentSettings = DEFAULT_SETTINGS) {
   if (!rawText || typeof rawText !== 'string') return null;
 
@@ -110,7 +442,7 @@ export function parseWhatsAppMessage(rawText, currentSettings = DEFAULT_SETTINGS
   let items = '';
   let sellingPrice = '';
   let estimatedCapital = '';
-  let deliveryFee = getCurrentDeliveryFee(currentSettings); // Auto day/night fee!
+  let deliveryFee = getCurrentDeliveryFee(currentSettings);
 
   lines.forEach(line => {
     const lower = line.toLowerCase();

@@ -1,15 +1,26 @@
 import React, { useState, useEffect } from 'react';
 import { CheckCircle2, DollarSign, Wallet, Check } from 'lucide-react';
 
+const CUSTOMER_RATINGS = [
+  { value: 1, emoji: '😡', label: 'مشكل كبير', color: '#ef4444' },
+  { value: 2, emoji: '😕', label: 'مشكل صغير', color: '#f97316' },
+  { value: 3, emoji: '😐', label: 'عادي', color: '#eab308' },
+  { value: 4, emoji: '😊', label: 'مزيان', color: '#22c55e' },
+  { value: 5, emoji: '⭐', label: 'ممتاز VIP', color: '#a78bfa' }
+];
+
 export default function MarkDeliveredModal({ isOpen, onClose, order, onConfirmDelivered }) {
   const [actualCapital, setActualCapital] = useState(0);
   const [actualDeliveryFee, setActualDeliveryFee] = useState(25);
   const [notes, setNotes] = useState('');
+  const [customerRating, setCustomerRating] = useState(3); // default: عادي
 
   useEffect(() => {
     if (order) {
       setActualCapital(order.estimatedCapital || order.sellingPrice || 0);
       setActualDeliveryFee(order.deliveryFee || 25);
+      setCustomerRating(3);
+      setNotes('');
     }
   }, [order, isOpen]);
 
@@ -23,8 +34,9 @@ export default function MarkDeliveredModal({ isOpen, onClose, order, onConfirmDe
       actualCapital: Number(actualCapital),
       actualDeliveryFee: Number(actualDeliveryFee),
       totalCollected,
-      paymentMethod: 'cash', // Strictly Cash as requested
-      driverNotes: notes
+      paymentMethod: 'cash',
+      driverNotes: notes,
+      customerRating: customerRating
     });
     onClose();
   };
@@ -124,6 +136,74 @@ export default function MarkDeliveredModal({ isOpen, onClose, order, onConfirmDe
               </div>
             </div>
 
+          </div>
+
+          {/* Customer Rating Section */}
+          <div style={{
+            background: 'var(--bg-input)',
+            border: '1px solid var(--border-color)',
+            borderRadius: '16px',
+            padding: '16px',
+            marginBottom: '16px'
+          }}>
+            <label className="input-label" style={{ marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              📝 كيفاش كان الزبون؟ (اختياري)
+            </label>
+            <div style={{
+              display: 'flex',
+              gap: '6px',
+              justifyContent: 'center',
+              flexWrap: 'wrap'
+            }}>
+              {CUSTOMER_RATINGS.map(r => {
+                const isSelected = customerRating === r.value;
+                return (
+                  <button
+                    key={r.value}
+                    type="button"
+                    onClick={() => setCustomerRating(r.value)}
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      gap: '4px',
+                      padding: '10px 14px',
+                      borderRadius: '14px',
+                      border: isSelected ? `2px solid ${r.color}` : '2px solid transparent',
+                      background: isSelected ? `${r.color}20` : 'var(--bg-card)',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease',
+                      transform: isSelected ? 'scale(1.08)' : 'scale(1)',
+                      boxShadow: isSelected ? `0 4px 12px ${r.color}40` : 'none',
+                      minWidth: '68px'
+                    }}
+                  >
+                    <span style={{ fontSize: '1.6rem' }}>{r.emoji}</span>
+                    <span style={{
+                      fontSize: '0.68rem',
+                      fontWeight: isSelected ? 800 : 600,
+                      color: isSelected ? r.color : 'var(--text-muted)',
+                      whiteSpace: 'nowrap'
+                    }}>
+                      {r.label}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+            {customerRating <= 2 && (
+              <div style={{
+                marginTop: '10px',
+                padding: '8px 12px',
+                background: 'rgba(239, 68, 68, 0.1)',
+                border: '1px solid rgba(239, 68, 68, 0.3)',
+                borderRadius: '10px',
+                fontSize: '0.78rem',
+                color: '#fca5a5'
+              }}>
+                ⚠️ هاد التقييم غايتسجل عند الأدمين باش يميز الزبائن المشكلين
+              </div>
+            )}
           </div>
 
           {/* Optional Note */}

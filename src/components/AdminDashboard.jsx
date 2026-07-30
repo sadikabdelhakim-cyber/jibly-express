@@ -12,19 +12,22 @@ import {
   Zap,
   Settings,
   BarChart3,
-  ShoppingBag
+  UserCheck
 } from 'lucide-react';
 import OrderCard from './OrderCard';
 
 export default function AdminDashboard({ 
   orders, 
   drivers, 
+  customers = [],
   onOpenNewOrderModal, 
   onOpenWhatsAppModal, 
   onOpenPrintModal, 
   onOpenSettingsModal,
   onCancelOrder,
-  onOpenInvoiceModal
+  onOpenInvoiceModal,
+  onOpenCustomersModal,
+  onOpenProductsModal
 }) {
   const [filterStatus, setFilterStatus] = useState('all');
 
@@ -53,32 +56,6 @@ export default function AdminDashboard({
       totalCollected: drvTotal
     };
   });
-
-  // Aggregate Product / Item Statistics (إحصائيات المنتجات الأكثر طلباً)
-  const productStats = (() => {
-    const statsMap = {};
-    orders.forEach(order => {
-      const items = Array.isArray(order.itemList) && order.itemList.length > 0
-        ? order.itemList
-        : [{ name: order.items || 'طلب عام', quantity: 1, price: order.sellingPrice || 0 }];
-
-      items.forEach(item => {
-        const name = (item.name || 'منتج غير محدد').trim();
-        const qty = Number(item.quantity || 1);
-        const price = Number(item.price || 0);
-        const revenue = qty * price;
-
-        if (!statsMap[name]) {
-          statsMap[name] = { name, orderCount: 0, totalQty: 0, totalRevenue: 0, unitPrice: price };
-        }
-        statsMap[name].orderCount += 1;
-        statsMap[name].totalQty += qty;
-        statsMap[name].totalRevenue += revenue;
-      });
-    });
-
-    return Object.values(statsMap).sort((a, b) => b.totalQty - a.totalQty);
-  })();
 
   // Filtered Orders List
   const displayedOrders = orders.filter(o => {
@@ -129,6 +106,16 @@ export default function AdminDashboard({
           <button className="btn btn-secondary" onClick={onOpenPrintModal}>
             <Printer size={18} />
             <span>كشف الحساب</span>
+          </button>
+
+          <button className="btn" style={{ background: 'rgba(167, 139, 250, 0.15)', color: '#a78bfa', border: '1px solid rgba(167, 139, 250, 0.3)' }} onClick={onOpenCustomersModal}>
+            <UserCheck size={18} />
+            <span>👥 لائحة الزبائن ({customers.length})</span>
+          </button>
+
+          <button className="btn" style={{ background: 'rgba(6, 182, 212, 0.15)', color: 'var(--cyan)', border: '1px solid rgba(6, 182, 212, 0.3)' }} onClick={onOpenProductsModal}>
+            <BarChart3 size={18} />
+            <span>📊 إحصائيات المنتجات</span>
           </button>
 
         </div>
@@ -193,59 +180,7 @@ export default function AdminDashboard({
 
       </div>
 
-      {/* Product Statistics Card (إحصائيات المنتجات والسلع الأكثر طلباً) */}
-      <div className="glass-panel" style={{ padding: '20px' }}>
-        <h3 style={{ fontSize: '1.15rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
-          <BarChart3 size={20} style={{ color: 'var(--cyan)' }} />
-          <span>📊 إحصائيات المنتجات الأكثر طلباً عند الزبائن (الأعلى مبيعاً)</span>
-        </h3>
 
-        <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'right', fontSize: '0.9rem' }}>
-            <thead>
-              <tr style={{ borderBottom: '1px solid var(--border-color)', color: 'var(--text-muted)' }}>
-                <th style={{ padding: '10px' }}>المنتج / السلعة</th>
-                <th style={{ padding: '10px', textAlign: 'center' }}>الترتيب</th>
-                <th style={{ padding: '10px', textAlign: 'center' }}>إجمالي الكمية المطلوبة</th>
-                <th style={{ padding: '10px', textAlign: 'center' }}>عدد الطلبيات</th>
-                <th style={{ padding: '10px', textAlign: 'center' }}>إجمالي مدخول المنتج</th>
-              </tr>
-            </thead>
-            <tbody>
-              {productStats.length === 0 ? (
-                <tr>
-                  <td colSpan="5" style={{ padding: '16px', textAlign: 'center', color: 'var(--text-muted)' }}>
-                    لا توجد منتجات مسجلة حالياً
-                  </td>
-                </tr>
-              ) : (
-                productStats.map((prod, idx) => (
-                  <tr key={idx} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                    <td style={{ padding: '12px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <ShoppingBag size={16} style={{ color: 'var(--primary)' }} />
-                      <span>{prod.name}</span>
-                    </td>
-                    <td style={{ padding: '12px', textAlign: 'center' }}>
-                      <span className={`badge ${idx === 0 ? 'badge-amber' : idx === 1 ? 'badge-cyan' : 'badge-emerald'}`}>
-                        #{idx + 1}
-                      </span>
-                    </td>
-                    <td style={{ padding: '12px', textAlign: 'center', fontWeight: 800 }}>
-                      {prod.totalQty} قطعة
-                    </td>
-                    <td style={{ padding: '12px', textAlign: 'center' }}>
-                      {prod.orderCount} طلبية
-                    </td>
-                    <td style={{ padding: '12px', textAlign: 'center', fontWeight: 800, color: 'var(--primary)' }}>
-                      {prod.totalRevenue} DH
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
 
       {/* Drivers Daily Financial Leaderboard Table */}
       <div className="glass-panel" style={{ padding: '20px' }}>
